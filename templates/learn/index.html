@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}مركز التعلّم — AI & ML{% endblock %}
+{% block nav_learn %}active{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <section class="mb-6">
+    <h1 class="text-3xl font-bold text-white mb-2">مركز التعلّم: AI & ML</h1>
+    <p class="text-slate-300 leading-8">مسار مبسّط لتفهم الأساسيات ثم تطبقها مباشرة داخل المنصة.</p>
+    <div class="flex gap-2 flex-wrap mt-3">
+      <a href="{% url 'learn_code_lab' %}" class="px-3 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm">افتح مختبر الأكواد</a>
+      <a href="{% url 'datasets:list' %}" class="px-3 py-2 rounded-lg border border-slate-600 text-slate-200 hover:bg-slate-800 text-sm">ابدأ برفع Dataset</a>
+    </div>
+  </section>
+
+  <section class="grid lg:grid-cols-2 gap-3 mb-3">
+    <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-4">
+      <h2 class="text-sm font-semibold text-white mb-2">1) ما هو AI؟</h2>
+      <ul class="text-sm text-slate-300 space-y-2 list-disc pr-5">
+        <li>مجال يهدف لبناء أنظمة قادرة على التعلّم واتخاذ القرار.</li>
+        <li>انطلق رسميًا عام 1956 في مؤتمر Dartmouth.</li>
+        <li>تطبيقاته واسعة: الطب، التعليم، التنبؤ، المركبات الذكية.</li>
+      </ul>
+    </div>
+    <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-4">
+      <h2 class="text-sm font-semibold text-white mb-2">2) ما هو ML؟</h2>
+      <p class="text-sm text-slate-300 mb-2">جزء من AI يسمح للنظام بتعلم الأنماط من البيانات بدل كتابة القواعد يدويًا.</p>
+      <div class="text-sm text-slate-300 leading-7">
+        <strong class="text-slate-100">Dataset:</strong> البيانات الكاملة.<br>
+        <strong class="text-slate-100">Feature:</strong> عمود إدخال.<br>
+        <strong class="text-slate-100">Target:</strong> العمود الذي نريد توقعه.
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-xl border border-slate-700 bg-slate-900/50 p-4 mb-3">
+    <h2 class="text-sm font-semibold text-white mb-2">3) دورة بناء الموديل</h2>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-2 text-sm">
+      <div class="rounded-lg border border-slate-700 bg-slate-900 p-3">جمع البيانات</div>
+      <div class="rounded-lg border border-slate-700 bg-slate-900 p-3">التنظيف والتحضير</div>
+      <div class="rounded-lg border border-slate-700 bg-slate-900 p-3">التدريب</div>
+      <div class="rounded-lg border border-slate-700 bg-slate-900 p-3">الاختبار</div>
+      <div class="rounded-lg border border-slate-700 bg-slate-900 p-3">التقييم</div>
+    </div>
+  </section>
+
+  <section class="grid lg:grid-cols-2 gap-3 mb-3">
+    <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-4">
+      <h2 class="text-sm font-semibold text-white mb-2">4) Classification vs Regression</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="border-b border-slate-700 text-slate-400"><tr><th class="text-right py-2">النوع</th><th class="text-right py-2">المخرجات</th><th class="text-right py-2">مثال</th></tr></thead>
+          <tbody class="text-slate-200">
+            <tr class="border-b border-slate-800"><td class="py-2">Classification</td><td class="py-2">فئات</td><td class="py-2">Spam / Not Spam</td></tr>
+            <tr><td class="py-2">Regression</td><td class="py-2">قيمة رقمية</td><td class="py-2">سعر منزل</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-4">
+      <h2 class="text-sm font-semibold text-white mb-2">5) مقاييس الانحدار</h2>
+      <ul class="text-sm text-slate-300 space-y-2 list-disc pr-5">
+        <li><strong class="text-slate-100">MAE:</strong> متوسط الخطأ المطلق.</li>
+        <li><strong class="text-slate-100">MSE:</strong> متوسط مربع الخطأ.</li>
+        <li><strong class="text-slate-100">RMSE:</strong> جذر MSE بنفس وحدة الهدف.</li>
+        <li><strong class="text-slate-100">R²:</strong> نسبة التباين المفسّرة.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="rounded-xl border border-slate-700 bg-slate-900/50 p-4">
+    <h2 class="text-sm font-semibold text-white mb-2">Glossary</h2>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-slate-300">
+      <div class="rounded-lg border border-slate-700 bg-slate-900 p-3">AI: أنظمة تحاكي الذكاء البشري.</div>
+      <div class="rounded-lg border border-slate-700 bg-slate-900 p-3">Feature: عمود إدخال.</div>
+      <div class="rounded-lg border border-slate-700 bg-slate-900 p-3">Target: القيمة المراد توقعها.</div>
+      <div class="rounded-lg border border-slate-700 bg-slate-900 p-3">Generalization: أداء جيد على بيانات جديدة.</div>
+    </div>
+  </section>
+</div>
+{% endblock %}

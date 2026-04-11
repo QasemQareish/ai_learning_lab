@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% block title %}نتائج التجربة — AI Learning Lab{% endblock %}
+{% block nav_experiments %}active{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <div class="rounded-2xl border border-slate-700 bg-slate-900/50 p-4 mb-4">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <div class="text-sm text-slate-400 mb-2 flex items-center gap-2">
+          <a href="{% url 'experiments:list' %}" class="hover:text-white">التجارب</a>
+          <span>/</span>
+          <span class="text-slate-100">نتائج #{{ experiment.id }}</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">{{ experiment.dataset.name }}</h1>
+        <div class="flex gap-2 flex-wrap text-xs">
+          <span class="px-2 py-1 rounded-full bg-violet-500/20 text-violet-300">{{ experiment.get_algorithm_display }}</span>
+          {% if experiment.problem_type == 'classification' %}
+            <span class="px-2 py-1 rounded-full bg-slate-800 text-slate-300">Classification</span>
+          {% else %}
+            <span class="px-2 py-1 rounded-full bg-slate-800 text-slate-300">Regression</span>
+          {% endif %}
+          <span class="px-2 py-1 rounded-full bg-slate-800 text-slate-400 font-mono">{{ experiment.created_at|date:"d/m/Y H:i" }}</span>
+        </div>
+      </div>
+      <a href="{% url 'experiments:new' %}?dataset={{ experiment.dataset.id }}" class="px-3 py-2 rounded-lg border border-slate-600 text-slate-200 hover:bg-slate-800 text-sm">تجربة جديدة</a>
+    </div>
+  </div>
+
+  {% if experiment.algorithm == 'automl' %}
+    {% if automl_results %}
+    <div class="rounded-xl border border-emerald-600/40 bg-emerald-500/10 p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div class="text-sm text-slate-200">
+        أفضل خوارزمية مختارة عبر AutoML: <strong class="text-emerald-300">{{ best_automl.label }}</strong>
+        {% if experiment.problem_type == 'classification' %}
+          — Accuracy: <strong class="text-violet-300">{{ best_automl.score|floatformat:4 }}</strong>
+        {% else %}
+          — R²: <strong class="text-violet-300">{{ best_automl.score|floatformat:4 }}</strong>
+        {% endif %}
+      </div>
+      <a href="{% url 'experiments:automl_report' experiment.id %}" class="px-3 py-2 rounded-lg border border-slate-600 text-slate-100 hover:bg-slate-800 text-sm">عرض تقرير AutoML</a>
+    </div>
+    {% endif %}
+  {% endif %}
+
+  {% if experiment.problem_type == 'regression' %}
+  <div class="grid md:grid-cols-3 gap-3 mb-4">
+    <div class="rounded-xl border border-violet-500/40 bg-violet-500/10 p-4">
+      <div class="text-xs text-slate-300 mb-1">المعيار الأهم</div>
+      <div class="text-3xl font-bold text-violet-300">{{ result.r2 }}</div>
+      <div class="text-xs text-slate-400">R²</div>
+    </div>
+    <div class="rounded-xl border border-slate-700 bg-slate-900/60 p-4">
+      <div class="text-3xl font-bold text-amber-300">{{ result.mse }}</div>
+      <div class="text-xs text-slate-400">MSE</div>
+    </div>
+    <div class="rounded-xl border border-slate-700 bg-slate-900/60 p-4">
+      <div class="text-3xl font-bold text-emerald-300">{{ result.rmse }}</div>
+      <div class="text-xs text-slate-400">RMSE</div>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-2 gap-4 mb-4">
+    <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-4">
+      <h3 class="text-sm font-semibold text-white mb-3">Predictions Preview</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="text-slate-400 border-b border-slate-700">
+            <tr>
+              <th class="py-2 text-right">#</th>
+              <th class="py-2 text-right">الحقيقي</th>
+              <th class="py-2 text-right">التوقع</th>
+              <th class="py-2 text-right">الفرق</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a, p, d in zipped_results|slice:":10" %}
+            <tr class="border-b border-slate-800">
+              <td class="py-2">{{ forloop.counter }}</td>
+              <td class="py-2 text-slate-300">{{ a }}</td>
+              <td class="py-2 text-violet-300">{{ p }}</td>
+              {% if d < 1 %}
+              <td class="py-2 text-emerald-300">±{{ d }}</td>
+              {% else %}
+              <td class="py-2 text-amber-300">±{{ d }}</td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-4 text-sm text-slate-300 leading-7">
+      <h3 class="text-white font-semibold mb-2">كيف انحسبت أرقام هذه التجربة؟</h3>
+      <p><span class="text-violet-300 font-semibold">R²</span> = <span class="font-mono">1 - (SS_res / SS_tot)</span> → <strong>{{ result.r2 }}</strong></p>
+      <p><span class="text-amber-300 font-semibold">MSE</span> = <span class="font-mono">(1/n) Σ(y - ŷ)²</span> → <strong>{{ result.mse }}</strong></p>
+      <p><span class="text-emerald-300 font-semibold">RMSE</span> = <span class="font-mono">√MSE</span> → <span class="font-mono">√({{ result.mse }}) ≈ {{ result.rmse }}</span></p>
+    </div>
+  </div>
+  {% else %}
+  <div class="grid md:grid-cols-4 gap-3 mb-4">
+    <div class="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4">
+      <div class="text-xs text-slate-300">المعيار الأهم</div>
+      <div class="text-3xl font-bold text-emerald-300">{{ result.accuracy }}%</div>
+      <div class="text-xs text-slate-400">Accuracy</div>
+    </div>
+    {% if result.classification_report %}
+    <div class="rounded-xl border border-slate-700 bg-slate-900/60 p-4"><div class="text-3xl font-bold text-violet-300">{{ result.classification_report.weighted_avg.precision|floatformat:2 }}</div><div class="text-xs text-slate-400">Precision</div></div>
+    <div class="rounded-xl border border-slate-700 bg-slate-900/60 p-4"><div class="text-3xl font-bold text-amber-300">{{ result.classification_report.weighted_avg.recall|floatformat:2 }}</div><div class="text-xs text-slate-400">Recall</div></div>
+    <div class="rounded-xl border border-slate-700 bg-slate-900/60 p-4"><div class="text-3xl font-bold text-slate-100">{{ result.classification_report.weighted_avg.f1_score|floatformat:2 }}</div><div class="text-xs text-slate-400">F1</div></div>
+    {% endif %}
+  </div>
+
+  <div class="grid lg:grid-cols-2 gap-4 mb-4">
+    <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-4">
+      <h3 class="text-sm font-semibold text-white mb-3">Confusion Matrix</h3>
+      {% if result.confusion_matrix %}
+      <div class="grid grid-cols-3 gap-2 text-xs text-center">
+        <div></div>
+        <div class="bg-slate-800 rounded p-2 text-slate-300">توقع +</div>
+        <div class="bg-slate-800 rounded p-2 text-slate-300">توقع -</div>
+        <div class="bg-slate-800 rounded p-2 text-slate-300">فعلي +</div>
+        <div class="bg-emerald-500/20 rounded p-2 text-emerald-300">{{ result.confusion_matrix.0.0 }} TP</div>
+        <div class="bg-amber-500/20 rounded p-2 text-amber-300">{{ result.confusion_matrix.0.1 }} FN</div>
+        <div class="bg-slate-800 rounded p-2 text-slate-300">فعلي -</div>
+        <div class="bg-red-500/20 rounded p-2 text-red-300">{{ result.confusion_matrix.1.0 }} FP</div>
+        <div class="bg-emerald-500/20 rounded p-2 text-emerald-300">{{ result.confusion_matrix.1.1 }} TN</div>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if result.confusion_matrix %}
+      {% with tp=result.confusion_matrix.0.0 fn=result.confusion_matrix.0.1 fp=result.confusion_matrix.1.0 tn=result.confusion_matrix.1.1 %}
+      {% with total=tp|add:tn|add:fp|add:fn acc_num=tp|add:tn prec_den=tp|add:fp rec_den=tp|add:fn %}
+      <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-4 text-sm text-slate-300 leading-7">
+        <h3 class="text-white font-semibold mb-2">كيف انحسبت Accuracy / Precision / Recall؟</h3>
+        <p><span class="text-emerald-300">Accuracy</span> = {{ acc_num }}/{{ total }} = <strong>{% widthratio acc_num total 100 %}%</strong></p>
+        <p><span class="text-violet-300">Precision</span> = {{ tp }}/{{ prec_den }} = <strong>{% if prec_den > 0 %}{% widthratio tp prec_den 100 %}{% else %}0{% endif %}%</strong></p>
+        <p><span class="text-amber-300">Recall</span> = {{ tp }}/{{ rec_den }} = <strong>{% if rec_den > 0 %}{% widthratio tp rec_den 100 %}{% else %}0{% endif %}%</strong></p>
+      </div>
+      {% endwith %}
+      {% endwith %}
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-4 mb-4">
+    <h3 class="text-white font-semibold mb-3">جرّب التوقع بنفسك</h3>
+    <div id="predict-form">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3" id="feature-inputs">
+        {% for field in feature_inputs %}
+        <div>
+          <label class="block text-xs text-slate-400 mb-1 font-mono">{{ field.name }}</label>
+          {% if field.type == 'categorical' %}
+          <input type="text" inputmode="text" class="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 feature-val" data-feature="{{ field.name }}" data-type="text" placeholder="أدخل قيمة نصية">
+          {% else %}
+          <input type="number" class="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 feature-val" data-feature="{{ field.name }}" data-type="number" placeholder="0" step="any">
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <button id="predict-btn" class="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm" onclick="predict()">توقع ⚡</button>
+      <div id="predict-result" class="hidden mt-3 rounded-lg border border-violet-500/40 bg-violet-500/10 p-3 text-sm">
+        <span class="text-slate-300">التوقع:</span>
+        <span class="text-xl font-bold text-violet-300" id="pred-val">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-4">
+    <h3 class="text-white font-semibold mb-3">قارن مع خوارزميات أخرى</h3>
+    <div class="flex gap-2 flex-wrap">
+      {% for algo in other_algos %}
+      <form method="POST" action="{% url 'experiments:new' %}">
+        {% csrf_token %}
+        <input type="hidden" name="dataset_id" value="{{ experiment.dataset.id }}">
+        <input type="hidden" name="target_column" value="{{ experiment.target_column }}">
+        <input type="hidden" name="problem_type" value="{{ experiment.problem_type }}">
+        <input type="hidden" name="algorithm" value="{{ algo.value }}">
+        <input type="hidden" name="test_size" value="{{ experiment.test_size }}">
+        <button type="submit" class="px-3 py-2 rounded-lg border border-slate-600 text-slate-200 hover:bg-slate-800 text-sm">جرّب {{ algo.label }}</button>
+      </form>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function predict() {
+  const inputs = document.querySelectorAll('.feature-val');
+  const features = {};
+  inputs.forEach(inp => {
+    if (inp.dataset.type === 'number') {
+      const parsed = parseFloat(inp.value);
+      features[inp.dataset.feature] = Number.isNaN(parsed) ? 0 : parsed;
+    } else {
+      features[inp.dataset.feature] = inp.value || '';
+    }
+  });
+
+  const btn = document.getElementById('predict-btn');
+  btn.disabled = true;
+  btn.textContent = 'جاري التوقع...';
+
+  fetch('/experiments/{{ experiment.id }}/predict/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+    body: JSON.stringify(features)
+  })
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('pred-val').textContent = data.prediction;
+      document.getElementById('predict-result').classList.remove('hidden');
+      btn.disabled = false;
+      btn.textContent = 'توقع مجددًا ⚡';
+    })
+    .catch(() => {
+      btn.disabled = false;
+      btn.textContent = 'توقع ⚡';
+    });
+}
+</script>
+{% endblock %}

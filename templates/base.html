@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}AI Learning Lab{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+{% load static %}
+<style>
+:root {
+  --bg: #0a0a0f;
+  --bg2: #111118;
+  --bg3: #1a1a24;
+  --surface: #16161f;
+  --surface2: #1e1e2a;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --accent: #7c6ff7;
+  --accent2: #a89cf7;
+  --accent-glow: rgba(124,111,247,0.15);
+  --green: #4ade80;
+  --green-dim: rgba(74,222,128,0.12);
+  --amber: #fbbf24;
+  --amber-dim: rgba(251,191,36,0.12);
+  --red: #f87171;
+  --red-dim: rgba(248,113,113,0.12);
+  --text: #f0f0f8;
+  --text2: #9090a8;
+  --text3: #606070;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'IBM Plex Sans Arabic', sans-serif;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* nav */
+.nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; height: 60px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(10,10,15,0.85);
+  backdrop-filter: blur(20px);
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 15px; font-weight: 600; color: var(--text);
+  text-decoration: none;
+}
+.nav-logo-mark {
+  width: 28px; height: 28px; background: var(--accent);
+  border-radius: 8px; display: flex; align-items: center;
+  justify-content: center; font-size: 14px; color: white;
+}
+.nav-links { display: flex; gap: 4px; }
+.nav-link {
+  padding: 6px 14px; border-radius: var(--radius-sm);
+  font-size: 14px; color: var(--text2); text-decoration: none;
+  transition: all 0.15s;
+}
+.nav-link:hover { color: var(--text); background: var(--surface); }
+.nav-link.active { color: var(--accent2); background: var(--accent-glow); }
+
+/* layout */
+.page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+/* cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: var(--border2); }
+.card-sm { padding: 1rem 1.25rem; border-radius: var(--radius); }
+
+/* buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px; border-radius: var(--radius-sm);
+  font-family: var(--sans); font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s; border: none; text-decoration: none;
+}
+.btn-primary {
+  background: var(--accent); color: white;
+}
+.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+.btn-ghost {
+  background: transparent; color: var(--text2);
+  border: 1px solid var(--border2);
+}
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+.btn-sm { padding: 7px 14px; font-size: 13px; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+/* badges */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 10px; border-radius: 20px;
+  font-size: 12px; font-weight: 500;
+}
+.badge-purple { background: var(--accent-glow); color: var(--accent2); }
+.badge-green { background: var(--green-dim); color: var(--green); }
+.badge-amber { background: var(--amber-dim); color: var(--amber); }
+.badge-red { background: var(--red-dim); color: var(--red); }
+
+/* forms */
+.field { margin-bottom: 1.25rem; }
+.label {
+  display: block; margin-bottom: 6px;
+  font-size: 13px; color: var(--text2); font-weight: 500;
+}
+.input, .select {
+  width: 100%; padding: 10px 14px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-family: var(--sans); font-size: 14px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+.input:focus, .select:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.select option { background: var(--bg3); }
+
+/* metric card */
+.metric {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  text-align: center;
+}
+.metric-val { font-size: 28px; font-weight: 600; }
+.metric-lbl { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+/* step bar */
+.steps {
+  display: flex; align-items: center; gap: 0;
+  padding: 1rem 0; margin-bottom: 2rem;
+  overflow-x: auto;
+}
+.step-item { display: flex; align-items: center; gap: 0; }
+.step-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px; border-radius: var(--radius-sm);
+  font-size: 13px; white-space: nowrap;
+  transition: all 0.15s;
+}
+.step-num {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600; flex-shrink: 0;
+}
+.step-done .step-btn { color: var(--green); }
+.step-done .step-num { background: var(--green-dim); color: var(--green); }
+.step-active .step-btn { color: var(--text); background: var(--accent-glow); }
+.step-active .step-num { background: var(--accent); color: white; }
+.step-idle .step-btn { color: var(--text3); }
+.step-idle .step-num { background: var(--surface2); color: var(--text3); }
+.step-sep { width: 24px; height: 1px; background: var(--border2); margin: 0 2px; flex-shrink: 0; }
+
+/* table */
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th {
+  padding: 10px 14px; text-align: right;
+  background: var(--bg3); color: var(--text2);
+  font-weight: 500; font-size: 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 9px 14px; border-bottom: 1px solid var(--border);
+  color: var(--text); font-family: var(--mono); font-size: 12px;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--surface2); }
+
+/* alerts */
+.alert {
+  padding: 12px 16px; border-radius: var(--radius-sm);
+  font-size: 14px; margin-bottom: 1rem;
+  border-right: 3px solid;
+}
+.alert-success { background: var(--green-dim); color: var(--green); border-color: var(--green); }
+.alert-error { background: var(--red-dim); color: var(--red); border-color: var(--red); }
+.alert-info { background: var(--accent-glow); color: var(--accent2); border-color: var(--accent); }
+
+/* loading */
+.spinner {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid var(--border2);
+  border-top-color: var(--accent);
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* confusion matrix */
+.cm-grid {
+  display: grid; grid-template-columns: auto 1fr 1fr;
+  gap: 4px; font-size: 12px;
+}
+.cm-cell {
+  padding: 10px; border-radius: var(--radius-sm);
+  text-align: center; font-weight: 500;
+}
+.cm-tp { background: var(--green-dim); color: var(--green); }
+.cm-tn { background: var(--green-dim); color: var(--green); }
+.cm-fp { background: var(--red-dim); color: var(--red); }
+.cm-fn { background: var(--amber-dim); color: var(--amber); }
+.cm-head { background: var(--bg3); color: var(--text2); font-size: 11px; }
+.cm-empty { background: transparent; }
+
+/* explain box */
+.explain {
+  background: var(--accent-glow);
+  border: 1px solid rgba(124,111,247,0.2);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin-top: 12px;
+}
+.explain-title { font-size: 12px; font-weight: 600; color: var(--accent2); margin-bottom: 4px; }
+.explain-text { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+/* section title */
+.section-title {
+  font-size: 11px; font-weight: 600; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+
+/* grid utils */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+
+/* progress bar */
+.progress-wrap { background: var(--bg3); border-radius: 4px; height: 6px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 4px; background: var(--accent); transition: width 0.5s ease; }
+
+/* glow pulse */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+  50% { box-shadow: 0 0 20px 4px var(--accent-glow); }
+}
+.pulse { animation: pulse-glow 2s infinite; }
+
+/* fade in */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.4s ease forwards; }
+.fade-up-2 { animation: fadeUp 0.4s 0.1s ease both; }
+.fade-up-3 { animation: fadeUp 0.4s 0.2s ease both; }
+.fade-up-4 { animation: fadeUp 0.4s 0.3s ease both; }
+
+/* messages */
+.messages { list-style: none; margin-bottom: 1rem; }
+</style>
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<nav class="nav">
+  <a href="{% url 'home' %}" class="nav-logo">
+    <div class="nav-logo-mark">⚡</div>
+    AI Learning Lab
+  </a>
+  <div class="nav-links">
+    <a href="{% url 'home' %}" class="nav-link {% block nav_home %}{% endblock %}">الرئيسية</a>
+    <a href="{% url 'learn_center' %}" class="nav-link {% block nav_learn %}{% endblock %}">التعلّم</a>
+    <a href="{% url 'datasets:list' %}" class="nav-link {% block nav_datasets %}{% endblock %}">البيانات</a>
+    <a href="{% url 'experiments:list' %}" class="nav-link {% block nav_experiments %}{% endblock %}">التجارب</a>
+  </div>
+</nav>
+
+{% if messages %}
+<div class="page pb-0">
+  <ul class="messages">
+    {% for message in messages %}
+    <li class="alert alert-{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %}">
+      {{ message }}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% block content %}{% endblock %}
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

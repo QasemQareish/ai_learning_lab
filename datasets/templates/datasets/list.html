@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}البيانات — AI Learning Lab{% endblock %}
+{% block nav_datasets %}active{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <div>
+      <h1 class="text-3xl font-bold text-white">البيانات</h1>
+      <p class="text-slate-300 text-sm">ارفع CSV أو استخدم datasets الجاهزة.</p>
+    </div>
+    <button id="open-upload" class="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm">+ رفع Dataset</button>
+  </div>
+
+  <section id="upload-panel" class="hidden rounded-xl border border-slate-700 bg-slate-900/50 p-4 mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-white font-semibold">رفع Dataset جديد</h2>
+      <button id="close-upload" class="text-slate-400 hover:text-white">✕</button>
+    </div>
+    <form method="POST" enctype="multipart/form-data" id="upload-form" class="space-y-4">
+      {% csrf_token %}
+      <div class="grid md:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">اسم الـ Dataset</label>
+          <input type="text" name="name" class="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-100" placeholder="Student Performance" required>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">ملف CSV</label>
+          <input type="file" name="file" accept=".csv" id="csv-file" class="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-100" required>
+        </div>
+      </div>
+
+      <div id="drop-zone" class="rounded-xl border-2 border-dashed border-slate-600 p-8 text-center cursor-pointer hover:border-violet-400 transition" role="button">
+        <div class="text-3xl mb-2">📂</div>
+        <p class="text-sm text-slate-300">اسحب الملف هنا أو اضغط للاختيار</p>
+        <p id="file-name" class="text-xs text-violet-300 mt-2 font-mono"></p>
+      </div>
+
+      <button type="submit" id="upload-btn" class="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm">
+        <span id="upload-text">رفع وتحليل</span>
+        <span id="upload-spinner" class="hidden">⏳</span>
+      </button>
+    </form>
+  </section>
+
+  <section class="mb-6">
+    <div class="rounded-xl border border-violet-500/30 bg-violet-500/10 p-3 text-sm text-slate-200 mb-3">
+      💡 فيك تستخدم بيانات من
+      <a href="https://www.kaggle.com/datasets" target="_blank" rel="noopener noreferrer" class="text-violet-300 hover:text-violet-200 underline">Kaggle</a>
+      ثم ترفع CSV هون.
+    </div>
+
+    <h2 class="text-sm font-semibold text-white mb-3">Datasets جاهزة</h2>
+    <div class="grid md:grid-cols-3 gap-3">
+      {% for ds in builtin_datasets %}
+      <form method="POST" action="{% url 'datasets:load_builtin' %}">
+        {% csrf_token %}
+        <input type="hidden" name="dataset_key" value="{{ ds.key }}">
+        <button type="submit" class="w-full text-right rounded-xl border border-slate-700 bg-slate-900/50 p-4 hover:border-slate-500 transition">
+          <div class="text-2xl mb-2">{{ ds.icon }}</div>
+          <div class="text-white text-sm font-semibold">{{ ds.name }}</div>
+          <div class="text-xs text-slate-400 mt-1 mb-2">{{ ds.desc }}</div>
+          <span class="px-2 py-1 rounded-full text-xs bg-violet-500/20 text-violet-300">{{ ds.rows }} صف</span>
+        </button>
+      </form>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section>
+    <h2 class="text-sm font-semibold text-white mb-3">ملفاتك المرفوعة ({{ datasets|length }})</h2>
+    {% if datasets %}
+    <div class="space-y-2">
+      {% for ds in datasets %}
+      <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div class="text-white text-sm font-semibold">{{ ds.name }}</div>
+          <div class="text-xs text-slate-400">{{ ds.row_count }} صف · {{ ds.column_count }} عمود · {{ ds.uploaded_at|date:"d/m/Y H:i" }}</div>
+        </div>
+        <div class="flex gap-2">
+          <a href="{% url 'datasets:preview' ds.id %}" class="px-3 py-2 rounded-lg border border-slate-600 text-slate-200 hover:bg-slate-800 text-xs">معاينة</a>
+          <a href="{% url 'experiments:new' %}?dataset={{ ds.id }}" class="px-3 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs">تجربة</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+      <div class="rounded-xl border border-dashed border-slate-700 p-8 text-center text-slate-400">ما في datasets بعد.</div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const uploadPanel = document.getElementById('upload-panel');
+document.getElementById('open-upload')?.addEventListener('click', () => uploadPanel.classList.remove('hidden'));
+document.getElementById('close-upload')?.addEventListener('click', () => uploadPanel.classList.add('hidden'));
+
+const fileInput = document.getElementById('csv-file');
+const dropZone = document.getElementById('drop-zone');
+const fileName = document.getElementById('file-name');
+
+dropZone?.addEventListener('click', () => fileInput?.click());
+
+fileInput?.addEventListener('change', e => {
+  if (e.target.files[0]) fileName.textContent = e.target.files[0].name;
+});
+
+dropZone?.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('border-violet-400');
+});
+dropZone?.addEventListener('dragleave', () => dropZone.classList.remove('border-violet-400'));
+dropZone?.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('border-violet-400');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.csv')) {
+    fileInput.files = e.dataTransfer.files;
+    fileName.textContent = file.name;
+  }
+});
+
+document.getElementById('upload-form')?.addEventListener('submit', () => {
+  document.getElementById('upload-text').textContent = 'جاري الرفع...';
+  document.getElementById('upload-spinner').classList.remove('hidden');
+  document.getElementById('upload-btn').disabled = true;
+});
+</script>
+{% endblock %}

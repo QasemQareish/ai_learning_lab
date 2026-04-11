@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% block title %}تجربة جديدة — AI Learning Lab{% endblock %}
+{% block nav_experiments %}active{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-8">
+  <div class="text-sm text-slate-400 mb-4 flex items-center gap-2">
+    <a href="{% url 'experiments:list' %}" class="hover:text-white">التجارب</a>
+    <span>/</span>
+    <span class="text-slate-100">تجربة جديدة</span>
+  </div>
+
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-white mb-2">ابدأ تجربة تعلم آلة جديدة</h1>
+    <p class="text-slate-300">اتبع الخطوات بالترتيب حتى تصل لتدريب النموذج.</p>
+  </div>
+
+  <div id="wizard-progress" class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
+    <div class="wizard-pill" data-step="1">1) البيانات</div>
+    <div class="wizard-pill" data-step="2">2) Target</div>
+    <div class="wizard-pill" data-step="3">3) نوع المشكلة</div>
+    <div class="wizard-pill" data-step="4">4) الخوارزمية</div>
+    <div class="wizard-pill" data-step="5">5) التدريب</div>
+  </div>
+
+  <form method="POST" id="experiment-form" class="space-y-4">
+    {% csrf_token %}
+
+    <section id="step-1" class="step-card">
+      <h2 class="step-title">1) اختر الـ Dataset</h2>
+      <p class="step-help">اختيار بيانات واضحة يساعد على نتائج أفضل.</p>
+      <select name="dataset_id" class="tw-select" required id="dataset-select">
+        <option value="">— اختر dataset —</option>
+        {% for ds in datasets %}
+        <option value="{{ ds.id }}" {% if selected_dataset == ds.id|stringformat:'s' %}selected{% endif %}>{{ ds.name }} ({{ ds.row_count }} صف)</option>
+        {% endfor %}
+      </select>
+    </section>
+
+    <section id="step-2" class="step-card">
+      <h2 class="step-title">2) اختر العمود الهدف (Target)</h2>
+      <p class="step-help">هذا هو العمود الذي تريد من النموذج توقعه.</p>
+      <select name="target_column" class="tw-select" required id="target-select">
+        <option value="">— اختر عمود الهدف —</option>
+        {% for col in columns %}
+        <option value="{{ col }}">{{ col }}</option>
+        {% endfor %}
+      </select>
+    </section>
+
+    <section id="step-3" class="step-card">
+      <h2 class="step-title">3) حدد نوع المشكلة</h2>
+      <div class="grid md:grid-cols-2 gap-3 mt-3">
+        <label class="prob-btn" id="btn-regression">
+          <input type="radio" name="problem_type" value="regression" onchange="updateAlgos(this)">
+          <div class="font-semibold">📈 Regression</div>
+          <div class="text-xs text-slate-400">توقع رقم (مثل السعر أو الدرجة)</div>
+        </label>
+        <label class="prob-btn" id="btn-classification">
+          <input type="radio" name="problem_type" value="classification" onchange="updateAlgos(this)">
+          <div class="font-semibold">🎯 Classification</div>
+          <div class="text-xs text-slate-400">توقع فئة (نعم/لا أو تصنيف)</div>
+        </label>
+      </div>
+
+      <label for="use-automl" class="mt-4 flex gap-3 p-3 rounded-lg border border-slate-700 bg-slate-900/50 cursor-pointer">
+        <input type="checkbox" id="use-automl" name="use_automl" class="mt-1 accent-violet-500">
+        <div>
+          <div class="text-sm font-semibold text-white">فعّل AutoML</div>
+          <div class="text-xs text-slate-400">سيتم تجربة عدة خوارزميات واختيار الأفضل تلقائيًا.</div>
+        </div>
+      </label>
+    </section>
+
+    <section id="step-4" class="step-card">
+      <h2 class="step-title">4) اختر الخوارزمية</h2>
+      <p class="step-help" id="algo-help">اختر يدويًا، أو فعّل AutoML للاختيار التلقائي.</p>
+      <div class="grid md:grid-cols-2 gap-3 mt-3">
+        <label class="algo-card" data-type="regression">
+          <input type="radio" name="algorithm" value="linear_regression">
+          <div class="font-semibold">Linear Regression</div>
+          <div class="text-xs text-slate-400">Baseline سريع وسهل التفسير</div>
+        </label>
+        <label class="algo-card" data-type="regression" title="مناسب للعلاقات غير الخطية بشكل عام">
+          <input type="radio" name="algorithm" value="decision_tree">
+          <div class="font-semibold">Decision Tree (R)</div>
+          <div class="text-xs text-slate-400">مفيد للعلاقات غير الخطية</div>
+        </label>
+        <label class="algo-card hidden" data-type="classification">
+          <input type="radio" name="algorithm" value="logistic_regression">
+          <div class="font-semibold">Logistic Regression</div>
+          <div class="text-xs text-slate-400">ممتاز كبداية للتصنيف</div>
+        </label>
+        <label class="algo-card hidden" data-type="classification">
+          <input type="radio" name="algorithm" value="decision_tree">
+          <div class="font-semibold">Decision Tree (C)</div>
+          <div class="text-xs text-slate-400">واضح وسهل القراءة</div>
+        </label>
+        <label class="algo-card hidden" data-type="classification">
+          <input type="radio" name="algorithm" value="knn">
+          <div class="font-semibold">KNN</div>
+          <div class="text-xs text-slate-400">يعتمد على أقرب الجيران</div>
+        </label>
+      </div>
+    </section>
+
+    <section id="step-5" class="step-card">
+      <h2 class="step-title">5) إعدادات التدريب</h2>
+      <label class="text-sm text-slate-300">نسبة بيانات الاختبار: <span id="test-size-val" class="text-violet-300">20%</span></label>
+      <input type="range" name="test_size" min="10" max="40" value="20" step="5" class="w-full mt-2" oninput="document.getElementById('test-size-val').textContent=this.value+'%'">
+      <div class="flex justify-between text-xs text-slate-500 mt-1"><span>10%</span><span>40%</span></div>
+    </section>
+
+    <div class="sticky bottom-3 bg-slate-950/80 backdrop-blur rounded-xl border border-slate-800 p-3">
+      <button type="submit" class="w-full py-3 rounded-lg bg-violet-600 hover:bg-violet-500 text-white font-medium disabled:opacity-50" id="train-btn">
+        <span id="train-text">ابدأ التدريب ⚡</span>
+        <span id="train-spinner" class="hidden">⏳</span>
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.wizard-pill{padding:.55rem .7rem;border:1px solid #334155;border-radius:.6rem;background:#0f172a;color:#94a3b8;font-size:.8rem}
+.wizard-pill.active{border-color:#8b5cf6;color:#fff;background:rgba(139,92,246,.2)}
+.wizard-pill.done{border-color:#22c55e;color:#86efac;background:rgba(34,197,94,.15)}
+.step-card{border:1px solid #334155;background:#0b1220;border-radius:14px;padding:1rem}
+.step-card.active{border-color:#8b5cf6;box-shadow:0 0 0 1px rgba(139,92,246,.35) inset}
+.step-title{color:#fff;font-weight:700;font-size:1rem}
+.step-help{color:#94a3b8;font-size:.8rem;margin-top:.25rem}
+.tw-select{width:100%;margin-top:.6rem;padding:.65rem .75rem;border-radius:.65rem;background:#0f172a;border:1px solid #334155;color:#f8fafc}
+.prob-btn,.algo-card{display:block;padding:.8rem;border:1px solid #334155;border-radius:.7rem;background:#0f172a;cursor:pointer}
+.prob-btn.selected,.algo-card.selected{border-color:#8b5cf6;background:rgba(139,92,246,.18)}
+.algo-card.dimmed{opacity:.45;pointer-events:none}
+.prob-btn input,.algo-card input{display:none}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateWizardState() {
+  const datasetSelected = !!document.getElementById('dataset-select')?.value;
+  const targetSelected = !!document.getElementById('target-select')?.value;
+  const problemSelected = !!document.querySelector('input[name="problem_type"]:checked');
+  const useAutoML = !!document.getElementById('use-automl')?.checked;
+  const algoSelected = !!document.querySelector('input[name="algorithm"]:checked') || useAutoML;
+
+  let activeStep = 1;
+  if (datasetSelected) activeStep = 2;
+  if (targetSelected) activeStep = 3;
+  if (problemSelected) activeStep = 4;
+  if (algoSelected) activeStep = 5;
+
+  document.querySelectorAll('.wizard-pill').forEach(pill => {
+    const step = Number(pill.dataset.step);
+    pill.classList.remove('active', 'done');
+    if (step < activeStep) pill.classList.add('done');
+    if (step === activeStep) pill.classList.add('active');
+  });
+
+  document.querySelectorAll('.step-card').forEach((card, idx) => {
+    card.classList.toggle('active', idx + 1 === activeStep);
+  });
+}
+
+function syncAutoMLState() {
+  const useAutoML = document.getElementById('use-automl')?.checked;
+  document.querySelectorAll('.algo-card').forEach(card => {
+    card.classList.toggle('dimmed', useAutoML);
+    const input = card.querySelector('input');
+    input.disabled = useAutoML;
+    if (useAutoML) {
+      input.checked = false;
+      card.classList.remove('selected');
+    }
+  });
+
+  const help = document.getElementById('algo-help');
+  if (help) help.textContent = useAutoML
+    ? 'AutoML مفعّل: سيتم اختيار أفضل خوارزمية تلقائيًا.'
+    : 'اختر يدويًا، أو فعّل AutoML للاختيار التلقائي.';
+
+  updateWizardState();
+}
+
+function updateAlgos(radio) {
+  const type = radio.value;
+  document.querySelectorAll('.algo-card').forEach(card => {
+    const sameType = card.dataset.type === type;
+    card.classList.toggle('hidden', !sameType);
+    if (!sameType) {
+      card.classList.remove('selected');
+      card.querySelector('input').checked = false;
+    }
+  });
+
+  document.querySelectorAll('.prob-btn').forEach(b => b.classList.remove('selected'));
+  radio.closest('.prob-btn').classList.add('selected');
+  updateWizardState();
+}
+
+document.querySelectorAll('.algo-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const input = card.querySelector('input');
+    input.checked = true;
+    document.querySelectorAll('.algo-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    updateWizardState();
+  });
+});
+
+const datasetSelect = document.getElementById('dataset-select');
+const targetSelect = document.getElementById('target-select');
+
+datasetSelect?.addEventListener('change', function() {
+  updateWizardState();
+  if (this.value) {
+    fetch(`/datasets/${this.value}/columns/`)
+      .then(r => r.json())
+      .then(data => {
+        targetSelect.innerHTML = '<option value="">— اختر عمود الهدف —</option>';
+        data.columns.forEach(col => {
+          targetSelect.innerHTML += `<option value="${col.name}">${col.name} (${col.type === 'numeric' ? 'رقمي' : 'فئوي'})</option>`;
+        });
+      });
+  }
+});
+
+targetSelect?.addEventListener('change', updateWizardState);
+document.querySelectorAll('input[name="problem_type"]').forEach(r => r.addEventListener('change', updateWizardState));
+document.getElementById('use-automl')?.addEventListener('change', syncAutoMLState);
+
+document.getElementById('experiment-form')?.addEventListener('submit', () => {
+  document.getElementById('train-text').textContent = 'جاري تدريب النموذج...';
+  document.getElementById('train-spinner').classList.remove('hidden');
+  document.getElementById('train-btn').disabled = true;
+});
+
+if (datasetSelect?.value) datasetSelect.dispatchEvent(new Event('change'));
+syncAutoMLState();
+updateWizardState();
+</script>
+{% endblock %}

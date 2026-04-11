@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}AI Learning Lab — تعلم الذكاء الاصطناعي{% endblock %}
+{% block nav_home %}active{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-10">
+  <section class="text-center max-w-3xl mx-auto mb-10">
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs bg-violet-500/15 text-violet-300 border border-violet-400/30">⚡ منصة تعليمية تفاعلية</span>
+    <h1 class="text-4xl md:text-5xl font-bold text-white mt-4 leading-tight">تعلّم الذكاء الاصطناعي <span class="text-violet-300">بالتجربة</span></h1>
+    <p class="text-slate-300 mt-4">ارفع بياناتك، جرّب الخوارزميات، وشوف النتائج فوراً — بدون تعقيد.</p>
+    <div class="flex flex-wrap gap-3 justify-center mt-6">
+      <a href="{% url 'experiments:new' %}" class="px-5 py-3 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium">ابدأ تجربة جديدة</a>
+      <a href="{% url 'datasets:list' %}" class="px-5 py-3 rounded-lg border border-slate-600 text-slate-200 hover:bg-slate-800 text-sm">استعرض البيانات</a>
+    </div>
+  </section>
+
+  <section class="grid md:grid-cols-3 gap-3 mb-8">
+    <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-4 text-center"><div class="text-3xl font-bold text-violet-300">{{ datasets_count }}</div><div class="text-xs text-slate-400">Dataset محفوظ</div></div>
+    <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-4 text-center"><div class="text-3xl font-bold text-emerald-300">{{ experiments_count }}</div><div class="text-xs text-slate-400">تجربة مكتملة</div></div>
+    <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-4 text-center"><div class="text-3xl font-bold text-amber-300">4</div><div class="text-xs text-slate-400">خوارزمية متاحة</div></div>
+  </section>
+
+  <section class="rounded-xl border border-slate-700 bg-slate-900/50 p-4 mb-8">
+    <h2 class="text-sm font-semibold text-white mb-4">كيف يشتغل المشروع</h2>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      {% for step in pipeline_steps %}
+      <div class="rounded-lg border border-slate-700 bg-slate-900 p-3 text-center">
+        <div class="text-xl mb-2">{{ step.icon }}</div>
+        <div class="text-sm text-white font-medium">{{ step.title }}</div>
+        <div class="text-xs text-slate-400 mt-1">{{ step.desc }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% if recent_experiments %}
+  <section>
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-sm font-semibold text-white">آخر التجارب</h2>
+      <a href="{% url 'experiments:list' %}" class="text-xs text-slate-300 hover:text-white">عرض الكل</a>
+    </div>
+    <div class="space-y-2">
+      {% for exp in recent_experiments %}
+      <a href="{% url 'experiments:detail' exp.id %}" class="block rounded-xl border border-slate-700 bg-slate-900/50 hover:border-slate-500 p-3">
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <div class="text-white text-sm font-medium">{{ exp.dataset.name }}</div>
+            <div class="text-xs text-slate-400">{{ exp.get_algorithm_display }} · {{ exp.created_at|date:"d/m/Y" }}</div>
+          </div>
+          {% if exp.accuracy %}<span class="px-2 py-1 rounded-full text-xs bg-emerald-500/20 text-emerald-300">{{ exp.accuracy }}%</span>{% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}
